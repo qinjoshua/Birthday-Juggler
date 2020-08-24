@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Birthday Juggler</title>
+  <meta name="description" content="Birthday Juggler">
+  <meta name="author" content="SitePoint">
+
+  <style>
+      body {
+        padding: 0px;
+        margin: 0px;
+        border: 0px;
+      }
+
+      #main-header {
+        padding-top: 200px;
+        background-image: url("background1.png");
+        background-size: cover;
+        text-align: center;
+        height: 1060px;
+      }
+
+      #content-header {
+        background-color: white;
+        margin-left: auto;
+        margin-right: auto;
+        width: 760px;
+        padding: 80px;
+        box-shadow: 0 8px 6px -6px grey;
+      }
+
+      h1 {
+          font-size: 50px;
+          color: rgb(100, 100, 100);
+      }
+      
+      h2 {
+        font-size: 30px;
+        color: rgb(150, 150, 150);
+      }
+
+      #juggling-balls {
+        position:absolute;
+        top:750px;
+        left:50%;
+        cursor: pointer;
+      }
+
+       /* The Modal (background) */
+      .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+      }
+
+      /* Modal Content/Box */
+      .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto; /* 15% from the top and centered */
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%; /* Could be more or less, depending on screen size */
+        line-height: 30px;
+      }
+
+      /* The Close Button */
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+      }
+
+      .close:hover,
+      .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      .grid-container {
+          display: grid;
+          grid-template-columns: 1.5fr 1fr;
+          grid-gap: 20px;
+      }
+  </style>
+</head>
+
+<body>
+  <div>
+      <div id=main-header>
+        <div id=content-header>
+          <h1>YEAR 2X2X - AUGUST - 24</h1>
+          <h2>IT IS YOUR 20TH BIRTHDAY</h2>
+          <h2>YOU WILL HAVE</h2>
+          <h1>A HAPPY BIRTHDAY.</h1>
+        </div>
+      </div>
+      <div id="juggling-balls">
+        <img src="balls.png"/>
+      </div>
+
+      <!-- The Modal -->
+      <div id="myModal" class="modal">
+
+        <!-- Modal content -->
+        <div class="modal-content">
+          <span class="close">&times;</span>
+          <div class="grid-container">
+            <div class="grid-child"><iframe src="ballgame.html" title="Birthday Juggler Game" width="100%" height="650" style="border:none;"></iframe></div>
+            <div class="grid-child">
+              <h1>Birthday Juggler</h1>
+              <h2>A juggling simulator - by Joshua Qin</h2>
+              <h3>Some of our glowing testimonials!</h3>
+              <ul>
+                <li>"The one time juggling is good" --A gushing review by Sadie Levy</li>
+                <li>"God ████ing dammit! Why won't it work?! It's supposed to work!" --4AM Joshua Qin</li>
+                <li>"Nice! This is interesting!" --Garrett Smith, probable first thoughts</li>
+                <li>"Is this what purgatory feels like?" --Garrett Smith, probable thoughts after playing a bit</li>
+                <li>"Happy Birthday Garrett@ Have a great day and make sure you go on a runat 5am sharp to make it the best bday ever :) --HaDeal FarHan</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div> 
+  </div>
+
+  <script>
+    // Get the modal
+    var modal = document.getElementById("myModal");
+
+    // Get the button that opens the modal
+    var btn = document.getElementById("juggling-balls");
+
+    // Get the <span> element that closes the modal
+    var span = document.getElementsByClassName("close")[0];
+
+    // When the user clicks on the button, open the modal
+    btn.onclick = function() {
+      modal.style.display = "block";
+    }
+
+    // When the user clicks on <span> (x), close the modal
+    span.onclick = function() {
+      modal.style.display = "none";
+    }
+
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function(event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    } 
+  </script>
+</body>
+</html>

@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>JavaScript</title>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/processing.js/1.4.8/processing.min.js"></script>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<script>
+var canvas = document.getElementById("canvas");
+var processing = new Processing(canvas, function(processing) {
+processing.size(600, 600);
+processing.background(0xFFF);
+
+// use degrees rather than radians in rotate function
+var rotateFn = processing.rotate;
+processing.rotate = function (angle) {
+rotateFn(processing.radians(angle));
+};
+
+with (processing) {
+
+// Dedicated to my good friend Garrett Smith, in honor of his 20th Birthday
+
+// (Because I know Garrett will be reading this)
+/**
+ * ██╗    ██╗ █████╗ ██████╗ ███╗   ██╗██╗███╗   ██╗ ██████╗                           
+ * ██║    ██║██╔══██╗██╔══██╗████╗  ██║██║████╗  ██║██╔════╝                           
+ * ██║ █╗ ██║███████║██████╔╝██╔██╗ ██║██║██╔██╗ ██║██║  ███╗                          
+ * ██║███╗██║██╔══██║██╔══██╗██║╚██╗██║██║██║╚██╗██║██║   ██║                          
+ * ╚███╔███╔╝██║  ██║██║  ██║██║ ╚████║██║██║ ╚████║╚██████╔╝                          
+ *  ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝╚═╝  ╚═══╝ ╚═════╝    
+ * 
+ * This code contains magical constants, variable naming schemes, and algorithms known
+ * by the State of California to cause bad design and debugging headaches. Prolonged
+ * exposure to this code may result in symptoms including but not limited to all-nighters,
+ * Honest Tea™ overdose, Post-Centipede Traumatic Disorder, social ostracization by your
+ * non-programming friends, and a variety of other ailments and maladies.
+ * 
+ * Terrible code ahead. Proceed with caution.
+ * 
+ */
+var ballIsPressed = false;
+var numBalls = 0;
+var time = 0;
+var health = 15;
+
+/**
+ * 
+ */
+var Ball = function(m, x, y, color) {
+    this.mass = m;
+    this.position = new PVector(x, y);
+    this.velocity = new PVector(0, 0);
+    this.acceleration = new PVector(0, 0);
+    this.previousMousePosition = null;
+    this.previousPositions = [];
+    this.isSelected = false;
+    this.id = m;
+    this.r = red(color);
+    this.g = green(color);
+    this.b = blue(color);
+};
+  
+/**
+ * Applies force on the ball, if it is not selected.
+ */
+Ball.prototype.applyForce = function(force) {
+    if (this.isSelected === false) {
+      var f = PVector.div(force, this.mass);
+      this.acceleration.add(f);
+    }
+};
+
+/**
+ * Updates the ball's velocity and position, and resetting acceleration to zero.
+ */
+Ball.prototype.update = function() {
+    this.velocity.add(this.acceleration);
+    this.position.add(this.velocity);
+    this.acceleration.mult(0);
+};
+
+/**
+ * Draws the ball.
+ */
+Ball.prototype.display = function() {
+    // This chunk of code is driving me crazy. It works perfectly fine, but it's incredibly slow and I don't understand why. It seems to be the normalize function that causing the lag, but I use normalize in a bunch of other places that are called just as frequently and I see no slowdown problems! Agggh!
+    // Basically what the code does is that it allows the bright spot on the spheres to point towards a light source - in this code, situated at 0, 0. It works fine except it lags like hell and makes it unplayable.
+    // I'm very upset at this. If you can find a way to fix it that would be nice.
+    
+    /*
+    
+    var d = this.massToPixels();
+    
+    var r = 30;
+    var g = 60;
+    var b = 10;
+    
+    var lightSource = new PVector(0, 0);
+    var position = new PVector(this.position.x, this.position.y);
+    lightSource.sub(position);
+    lightSource.normalize();
+    
+    noStroke();
+    fill(r-50, this.g-50, this.b-50);
+    ellipse(this.position.x, this.position.y, d, d);
+    fill(this.r, this.g, this.b);
+    ellipse(this.position.x+lightSource.x*0.04, this.position.y+lightSource.y*0.04, 0.9*d, 0.9*d);
+    fill(this.r+100, this.g+100, this.b+100);
+    ellipse(this.position.x+lightSource.x*0.15*d, this.position.y+lightSource.y*0.15*d, 0.6 *d, 0.6 * d);
+    fill(this.r+150, this.g+150, this.b+150);
+    ellipse(this.position.x+lightSource.x*0.2*d, this.position.y+lightSource.y*0.2*d, 0.3*d, 0.3*d);
+    
+    */
+    
+    var d = this.massToPixels();
+    
+    var r = 30;
+    var g = 60;
+    var b = 10;
+    
+    noStroke();
+    fill(r-50, this.g-50, this.b-50);
+    ellipse(this.position.x, this.position.y, d, d);
+    fill(this.r, this.g, this.b);
+    ellipse(this.position.x-0.04*d, this.position.y-0.04*d, 0.9*d, 0.9*d);
+    fill(this.r+100, this.g+100, this.b+100);
+    ellipse(this.position.x-0.1*d, this.position.y-0.1*d, 0.6 *d, 0.6 * d);
+    fill(this.r+150, this.g+150, this.b+150);
+    ellipse(this.position.x-0.15*d, this.position.y-0.15*d, 0.3*d, 0.3*d);
+};
+
+Ball.prototype.checkEdges = function() {
+  if (this.position.x > width) {
+    this.position.x = width;
+    this.velocity.x *= -1;
+  } else if (this.position.x < 0) {
+    this.velocity.x *= -1;
+    this.position.x = 0;
+  }
+  if (this.position.y > height) {
+    this.velocity.y *= -1;
+    this.position.y = height;
+    return true;
+  }
+  return false;
+};
+
+Ball.prototype.mouseDragged = function() {
+    if (this.isSelected) {
+        this.velocity = new PVector(0, 0);
+        if(this.previousMousePosition === null) {
+            println(this.mass);
+        }
+        //println(this.mass);
+        this.recordPreviousPositions();
+        this.position = new PVector (this.position.x + mouseX - this.previousMousePosition.x, this.position.y + mouseY - this.previousMousePosition.y);
+        
+        this.previousMousePosition = new PVector(mouseX, mouseY);
+    }
+};
+
+Ball.prototype.mousePressed = function() {
+    if (this.mouseInBall() && !ballIsPressed && health > 0) {
+        this.isSelected = true;
+        ballIsPressed = true;
+        this.previousPositions = [];
+        this.previousMousePosition = new PVector(mouseX, mouseY);
+        //println("ack");
+    }
+};
+
+Ball.prototype.mouseReleased = function() {
+    if (this.isSelected) {
+        this.isSelected = false;
+        ballIsPressed = false;
+        this.velocity = this.releaseVelocity();
+        this.previousMousePosition = null;
+    }
+};
+
+Ball.prototype.massToPixels = function() {
+    return this.mass*16;
+};
+
+Ball.prototype.recordPreviousPositions = function() {
+    //print(this.previousPositions.length + " ");
+    this.previousPositions.push(new PVector(mouseX - this.previousMousePosition.x, mouseY - this.previousMousePosition.y));
+    //print(this.previousPositions.length);
+    //println(this.mass);
+};
+
+Ball.prototype.releaseVelocity = function() {
+    var returnVelocity = new PVector(0, 0);
+    
+    if (this.previousPositions.length > 1) {
+        for(var i = this.previousPositions.length - 1; i > this.previousPositions.length - 5; i--) {
+            returnVelocity.x += this.previousPositions[i].x;
+            returnVelocity.y += this.previousPositions[i].y;
+        }
+    }
+    
+    returnVelocity.div(7);
+    
+    return returnVelocity;
+};
+
+Ball.prototype.mouseInBall = function() {
+    if (dist(mouseX, mouseY, this.position.x, this.position.y) <= this.massToPixels()/2) {
+        return true;
+    }
+    return false;
+};
+
+var Balls = [];
+
+var colorGenerator = function(lowerbound) {
+    var randNumber = random(1, 4);
+    if (randNumber < 2) {
+        return 0;
+    } else {
+        return random(lowerbound, 255);
+    }
+};
+
+var newBall = function() {
+    Balls.push(new Ball(random(3, 5), width/2, 0, color(colorGenerator(51), colorGenerator(51), colorGenerator(51))));
+    numBalls++;
+};
+
+var ballLevels = function() {
+    if (health > 0) {
+        if (time >= sq(numBalls/1.5)*1000) {
+            newBall();
+        }
+        time++;
+    }
+};
+
+var colors = [];
+
+for (var i = 0; i < 15; i++) {
+    colors.push(color(colorGenerator(220), colorGenerator(220), colorGenerator(220)));
+}
+
+var lifeBar = function() {
+    strokeWeight(1);
+    pushMatrix();
+    pushStyle();
+    translate(14,44);
+    scale(0.5,0.5);
+    rotate(180);
+    fill(255, 0, 0);
+    noStroke();
+    beginShape();
+    curveVertex(-101,65); curveVertex(-83,-5); curveVertex(-62,12); curveVertex(-15,-9); curveVertex(-18,44); curveVertex(-60,29); curveVertex(-82,41); curveVertex(-83,19); curveVertex(-83,-4); curveVertex(-66,0); /**/
+    endShape();
+    popStyle();
+    popMatrix();
+    
+    pushMatrix();
+    pushStyle();
+    translate(242,27);
+    scale(0.5,0.5);
+    fill(255, 0, 0);
+    noStroke();
+    beginShape();
+    curveVertex(-101,65); curveVertex(-83,-5); curveVertex(-62,12); curveVertex(-15,-9); curveVertex(-18,44); curveVertex(-60,29); curveVertex(-82,41); curveVertex(-83,19); curveVertex(-83,-4); curveVertex(-66,0); /**/
+    endShape();
+    popStyle();
+    popMatrix();
+    
+    noFill();
+    stroke(255, 0, 0);
+    fill(173, 173, 173);
+    rect(52, 23, 150, 25, 5);
+    
+    for (var i = 0; i < health; i++) {
+        noStroke();
+        fill(colors[i]);
+        rect(i*10 + 52, 24, 10, 24, 3);
+    }
+    
+    noStroke();
+    fill(255, 255, 255, 100);
+    rect(60, 34, 136, 13, 5);
+    
+    
+    textFont(createFont("arial black"));
+    textSize(13);
+    fill(255, 255, 255, 200);
+    rect(90, 28, 76, 16, 5);
+    
+    textSize(12);
+    fill(255, 0, 0);
+    textAlign(CENTER);
+    text("LIVES: "+ health, 128, 40);
+};
+
+var flashPain = function() {
+    stroke(255, 0, 0, 20);
+    strokeWeight(30);
+    noFill();
+    rect(0, 0, width, height);
+    
+    if (health < 5) {
+        fill(255, 0, 0);
+        var discouragers = ["CENTIPEDE", "PACMAN", "BLERNER", "ANIMATOR", "SQUARE GAME", "SEAM CARVING", "COUNTING", "RACKET", "LAMBDA"];
+        
+        textSize(50);
+        textAlign(CENTER);
+        text(discouragers[round(random(0, discouragers.length - 1))], width/2, height/2);
+    }
+};
+
+var endScreen = function() {
+    if (health === 0) {
+        fill(77, 77, 77);
+        textSize(50);
+        textAlign(CENTER);
+        text("GAME OVER", width/2, height/2);
+        textSize(20);
+        text("Score: "  + round(time/10), width/2, height/2 + 25);
+        text("Happy 20th Birthday Garrett!", width/2, height/2+50);
+        text("Any key to restart", width/2, height/2+75);
+    }
+};
+
+var mouseDragged = function() {
+    for (var i = 0; i < Balls.length; i++) {
+        Balls[i].mouseDragged();
+    }
+};
+
+var mousePressed = function() {
+    for (var i = 0; i < Balls.length; i++) {
+        Balls[i].mousePressed();
+    }
+};
+
+var mouseReleased = function() {
+    for (var i = 0; i < Balls.length; i++) {
+        Balls[i].mouseReleased();
+    }
+};
+
+var mouseOut = function() {
+    for (var i = 0; i < Balls.length; i++) {
+        Balls[i].mouseReleased();
+    }
+};
+
+var keyPressed = function() {
+    if (health === 0) {
+        ballIsPressed = false;
+        numBalls = 0;
+        time = 0;
+        health = 15;
+        Balls = [];
+        colors = [];
+
+        for (var i = 0; i < 15; i++) {
+            colors.push(color(colorGenerator(220), colorGenerator(220), colorGenerator(220)));
+        }
+    }
+};
+
+var draw = function() {
+  background(255, 255, 255);
+  
+  lifeBar();
+  ballLevels();
+  endScreen();
+  
+  var handCursor = false;
+  
+  for (var i = 0; i < Balls.length; i++) {
+      handCursor = handCursor || Balls[i].mouseInBall();
+      
+    var wind = new PVector(0.01, 0);
+    var gravity = new PVector(0, 0.05*Balls[i].mass);
+    
+    var c = 0.0015;
+    var normal = 1;
+    var frictionMag = c * sq(Balls[i].velocity.get().mag());
+    var friction = Balls[i].velocity.get();
+    friction.mult(-1);
+    friction.normalize();
+    friction.mult(frictionMag);
+
+    Balls[i].applyForce(friction);
+    //Balls[i].applyForce(wind);
+    Balls[i].applyForce(gravity);
+    Balls[i].update();
+    Balls[i].display();
+    if (health > 0) {
+        if(Balls[i].checkEdges()) {
+            health--;
+            flashPain();
+        }
+    }
+    //text(Balls[i].isSelected, 20, i*20+20);
+  }
+  
+  if (handCursor && health > 0) {
+      cursor(HAND);
+  }
+  else
+  {
+      cursor(ARROW);
+  }
+};
+
+}
+if (typeof draw !== 'undefined') processing.draw = draw;
+});
+</script>
+</body>
+</html>
